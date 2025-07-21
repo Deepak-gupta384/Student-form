@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 { text-align: center; margin-bottom: 20px; }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .student-card {
+      background: #e6f7ff;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    .student-card button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Student Form</h2>
+    <input type="text" id="name" placeholder="Enter Name" />
+    <input type="text" id="roll" placeholder="Enter Roll No" />
+    <input type="text" id="subject" placeholder="Enter Subject" />
+    <select id="storage">
+      <option value="">-- Select Storage --</option>
+      <option value="local">Local Storage</option>
+      <option value="session">Session Storage</option>
+      <option value="cookie">Cookie</option>
+    </select>
+    <button onclick="saveData()">Save</button>
+    <div id="studentList"></div>
+  </div>  <script>
+    function saveData() {
+      const name = document.getElementById('name').value;
+      const roll = document.getElementById('roll').value;
+      const subject = document.getElementById('subject').value;
+      const storageType = document.getElementById('storage').value;
+
+      if (!name || !roll || !subject || !storageType) {
+        alert('Please fill all fields!');
+        return;
+      }
+
+      const student = { name, roll, subject };
+      let data = JSON.parse(getStorage(storageType).getItem('students') || '[]');
+      data.push(student);
+      getStorage(storageType).setItem('students', JSON.stringify(data));
+      renderStudents(storageType);
+    }
+
+    function renderStudents(storageType) {
+      const studentList = document.getElementById('studentList');
+      const data = JSON.parse(getStorage(storageType).getItem('students') || '[]');
+      studentList.innerHTML = '';
+      data.forEach((student, index) => {
+        const div = document.createElement('div');
+        div.className = 'student-card';
+        div.innerHTML = `
+          <strong>Name:</strong> ${student.name} <br>
+          <strong>Roll:</strong> ${student.roll} <br>
+          <strong>Subject:</strong> ${student.subject}<br>
+          <button onclick="editStudent(${index}, '${storageType}')">Edit</button>
+          <button onclick="deleteStudent(${index}, '${storageType}')">Delete</button>
+        `;
+        studentList.appendChild(div);
+      });
+    }
+
+    function editStudent(index, storageType) {
+      const data = JSON.parse(getStorage(storageType).getItem('students'));
+      const student = data[index];
+      document.getElementById('name').value = student.name;
+      document.getElementById('roll').value = student.roll;
+      document.getElementById('subject').value = student.subject;
+      deleteStudent(index, storageType);
+    }
+
+    function deleteStudent(index, storageType) {
+      let data = JSON.parse(getStorage(storageType).getItem('students'));
+      data.splice(index, 1);
+      getStorage(storageType).setItem('students', JSON.stringify(data));
+      renderStudents(storageType);
+    }
+
+    function getStorage(type) {
+      if (type === 'local') return localStorage;
+      if (type === 'session') return sessionStorage;
+      if (type === 'cookie') return {
+        getItem: () => decodeURIComponent(document.cookie.split('=')[1] || '[]'),
+        setItem: (key, value) => document.cookie = `${key}=${encodeURIComponent(value)};path=/`;
+      };
+    }
+  </script></body>
+</html>
